@@ -1,0 +1,377 @@
+#include<fstream>
+#include<iostream>
+#include<string.h>
+#include<exception>
+using namespace std;
+
+class groccery_list
+{
+	char name[20];
+	int stock;
+	char ext1[4];	
+	float price;
+public :
+	groccery_list()
+	{
+		stock = 0;
+		price = 0;
+		
+	}
+	void createlist()
+	{
+		ofstream myfile("shoplist.txt", ios::out);
+		
+	}
+	void addtolist(int st)
+	{
+		ofstream myfile;
+		int flag;		
+		
+		cout<<"\nEnter name of product"<<endl;
+				
+		cin.ignore();
+		cin.getline(name, 20);
+		
+		flag = checkavailable(name);
+		if(flag ==1 )
+		{
+		cout<<"\nproduct is already in list"<<endl;
+                }	
+		
+		else {		
+		cout<<"\nEnter price"<<endl;
+		cin>>price;
+		
+		cout<<"\nEnter stock position"<<endl;
+		cin>>stock>>ext1;
+		
+		
+		cout<<"\nproduct is added in list";
+		
+		myfile.open("shoplist.txt",  ios ::app);
+		myfile.write((char *)this, sizeof(groccery_list));
+		myfile.close();
+		}
+	}
+	int checkavailable(char *cname)
+	{
+		 int flag = 0;
+		ifstream myfile;
+		myfile.open("shoplist.txt", ios ::in);
+		myfile.seekg(0, ios::beg);
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				flag= 1;
+				break;
+			}
+		}
+		myfile.close();
+		return flag;
+	
+	}
+	void deductstock(int st,  char *cname)
+	{
+		fstream myfile;
+		myfile.open("shoplist.txt", ios ::in | ios ::out);
+		myfile.seekg(0, ios::beg);
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				stock= stock -  st;
+				myfile.seekp(-sizeof(groccery_list),ios::cur);
+				myfile.write((char *)this, sizeof(groccery_list));
+			}
+		}
+		myfile.close();
+	
+	}
+	void updatestock(int st, char cname[20])
+	{
+		int fl =0;
+		fstream myfile;
+		myfile.open("shoplist.txt", ios ::in | ios ::out);
+		myfile.seekg(0, ios::beg);
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				stock= st;
+				myfile.seekp(-sizeof(groccery_list),ios::cur);
+				myfile.write((char *)this, sizeof(groccery_list));
+			fl =1;
+			break;
+			}
+		}
+		if(fl==0) cout<<"\nUPDATION FAILED"<<endl;
+		else cout<<"\nUPDATEO SUCCESSFULLY"<<endl;
+		myfile.close();
+	}
+	
+	void updateprice(float pr, char cname[20])
+	{
+		int fl =0;
+		fstream myfile;
+		myfile.open("shoplist.txt", ios ::in | ios ::out);
+		myfile.seekg(0, ios::beg);		
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				price= pr;
+				myfile.seekp(-(sizeof(groccery_list)),ios::cur);
+				
+				myfile.write((char *)this, sizeof(groccery_list));
+			
+			fl =1;
+			break;
+			}
+		}
+		myfile.close();
+		
+		if(fl==0) cout<<"\nUPDATION FAILED"<<endl;
+		else cout<<"\nUPDATEO SUCCESSFULLY"<<endl;
+	}
+	void display()
+	{
+		ifstream myfile;
+		myfile.open("shoplist.txt", ios ::in );
+		myfile.seekg(0, ios::beg);
+		cout<<endl<<"Product"<<"\t"<<"Price"<<"\t \t"<<"Stock"<<endl;
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			//if(stock !=0){
+			{cout<<endl;
+			cout<<name;
+			cout<<"\t"<<price;
+			cout<<" per "<<ext1;
+			cout<<"\t"<<stock<<ext1;
+			}
+		}
+		myfile.close();
+	}
+
+	
+
+					
+};
+	
+class Admin
+{
+	groccery_list gl;
+	public :
+		void acceptdata(int st)
+		{
+			int total;
+			if( st==1) gl.createlist();
+			cout<<"\nEnter total number of products"<<endl;
+			cin>>total;
+			for(int i=0; i< total ; i++)
+			{
+				gl.addtolist(st);
+			}
+			gl.display();
+		}
+	
+
+		void update()
+		{
+			char name[20], ch;
+			int choice, stock;
+			float price;
+			cout<<"\nEnter name of product"<<endl;
+			cin.ignore();
+			cin.getline(name, 20);
+						
+			do
+			{
+			
+			cout<<"\n1.Update price \n2.Update stock"<<endl;
+			cin>>choice;
+			switch(choice)
+			{
+			case 1: cout<<"\nEnter price "<<endl;
+				cin>>price;
+				gl.updateprice(price, name);
+				break;
+			case 2: cout<<"\nEnter stock"<<endl;
+				cin>>stock;
+				gl.updatestock(stock, name);
+				break;
+						
+			}
+			cout<<"\nUpdate something else ?"<<endl;
+			cin>>ch;
+			}while(ch == 'y');
+		}	
+		void display()
+		{	
+			gl.display();
+		}
+							
+};
+
+class customerdata : public exception
+{
+public :
+	int userid;
+	char name[20];
+	char add[20];
+	float total;
+		
+public :
+	const char * what() const throw()
+	{
+		return "\nUser not found";
+	}
+	customerdata(){
+		name[20]={'\0'};
+		add[20]={'\0'};
+		total = 0;
+		}
+  	float data(int uid)
+	{
+		ifstream myfile;
+		int tot;
+		int fl=0;
+		myfile.open("customerdata.txt", ios ::in);
+		myfile.seekg(0, ios::beg);
+		while(myfile.read((char *)this, 136))		//size of customerdata is 136
+		{
+			if(uid == userid){
+				cout<<endl<<"Name :"<<name;
+				cout<<endl<<"Add :"<<add<<endl;	
+				cout<<"Balance : Rs."<< total;				
+				fl = 1;
+				break;}
+		}
+		myfile.close();
+		if(fl ==1) return total;
+		else
+			return -1;
+	}
+	
+	void updatebalance(float bal)
+	{
+		int uid = userid;
+		fstream myfile;
+		myfile.open("customerdata.txt", ios ::in | ios::out);
+		myfile.seekg(0, ios::beg);
+		while(myfile.read((char *)this, 136))		//size of customerdata is 136
+		{
+			if(uid == userid){
+				 total = bal;
+				myfile.seekp(-136,ios::cur);
+				myfile.write((char *)this, 136);				
+				break;}
+		}
+		myfile.close();
+	}
+};
+class Bill  
+{
+
+char name[20];
+	int quantity;
+	char ext;
+	float price;	
+	
+public :
+	
+	void displaybills()
+	{
+		customerdata cs;
+		
+		try{
+		groccery_list gl;
+		int uid, userid;
+		char id[2]={'\0'};
+		char ans;	
+		cout<<"\nuserid -->"<<endl;
+		cin>>uid;
+		float total =0;		
+		float bal=cs.data(uid);
+		if(bal==-1)
+			throw customerdata();
+		ifstream myfile;
+		id[0] = char(uid);
+		myfile.open(id, ios ::in );
+		myfile.seekg(0, ios :: beg);
+		myfile>>userid;
+		myfile.seekg(1, ios :: beg);
+		
+			
+		cout<<"\nDo you want to deduct stock(y/n)\n";
+		cin>>ans;
+		if(bal !=0)
+		cout<<"\nProdut \t Quantity \t Price";
+		while(myfile.read((char *)this, sizeof(Bill)))
+		{
+			cout<<endl;
+			cout<<endl<<name;
+			cout<<"\t\t"<<quantity<<ext;
+			cout<<"\t\t"<<price<<endl;
+			total = total + price;			
+			if(ans=='y'|| ans=='Y'){			
+			gl.deductstock(quantity,name);
+			}
+		}
+		
+		if(bal !=0){
+		cout<<"\nTotal price :"<<total;
+		cout<<"\nTotal Amount to be paid : Rs."<<bal;
+		cout<<"\nDid the user paid the amount?(y/n)"<<endl;
+		cin>>ans;
+		if(ans == 'y'){
+		cout<<"\nHow many ?"<<endl;
+		cin>>total;
+		}
+		bal = bal - total;
+		cs.updatebalance(bal);
+		}
+		
+		myfile.close();
+	}
+	catch(customerdata &e)
+	{
+		cout<<endl<<e.what()<<endl;	
+	}
+		
+	}
+		
+};
+
+int main()
+{
+	Admin a;
+	Bill b;
+	int choice;
+	cout<<"\nHi admin !"<<endl;
+    do {cout<<"\n1.Create list"; 
+	cout<<"\n2.Add products to the existing list";
+	cout<<"\n3.Update list"<<endl;
+	cout<<"4.Display list"<<endl;
+	cout<<"5.Customer bills"<<endl;	
+	cout<<"\nPress 6 to EXIT !"<<endl;
+	cin>>choice;
+	
+	switch(choice)
+	{
+		case 1:a.acceptdata(1);
+			break;
+		case 2:	a.acceptdata(2);
+			break;
+
+		case 3:a.update();
+			break;
+		case 4:a.display();
+			break;
+		case 5:b.displaybills();
+	}
+	
+      }while(choice !=5);
+}
+	
+	
