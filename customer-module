@@ -1,0 +1,603 @@
+#include<fstream>
+#include<iostream>
+#include<string.h>
+#include<exception>
+using namespace std;
+
+class groccery_list
+{
+	char name[20];
+	int quantity;
+	char ext[4];
+	float price;	
+	friend class Customer;
+public :
+	groccery_list()
+	{
+		name[20]={'\0'};
+		
+		price=0;
+		quantity= 0;
+		
+	}	
+	void createlist(char id[2], char nm[20], int q , char *ex, float pr)
+	{
+		ofstream myfile;
+		
+		strcpy(name, nm);
+		quantity= q;			
+		strcpy(ext, ex);
+		price = pr*q;
+		myfile.open(id, ios ::app);
+		myfile.write((char *)this, sizeof(groccery_list));
+		cout<<"\nProduct added to the list \n";
+		myfile.close();		
+	}
+	
+
+	
+	int checkavailable(char id[2], char *cname)
+	{
+		 int flag = 0;
+		ifstream myfile;
+		myfile.open(id, ios ::in);
+		myfile.seekg(1, ios::beg);
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				flag= 1;
+				break;
+			}
+		}
+		myfile.close();
+		return flag;
+	
+	}
+	int returntotal(char id[2])
+	{
+		float total= 0 ;
+		ifstream myfile;
+		myfile.open(id, ios ::in);
+		myfile.seekg(1,ios::beg);
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			total = total + price;
+		}
+		return total;
+	}
+	void display(char *id)
+	{
+		ifstream myfile;
+		myfile.open(id, ios ::in );
+		myfile.seekg(1, ios :: beg);
+		cout<<"\nProduct \t Quantity \t Price";
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(price != 0 && quantity !=0){
+			cout<<endl;
+			cout<<endl<<name;
+			cout<<"\t\t"<<quantity<<ext;
+			cout<<"\t\t"<<price<<endl;
+			}
+		}
+		myfile.close();
+	}
+	float compareproduct(char sname[20], int q)
+	{
+		int flag=0;
+		float myprice = 0;
+		ifstream sourcefile;
+		sourcefile.open("shoplist.txt", ios ::in);
+		sourcefile.seekg(0, ios :: beg);
+		while(sourcefile.read((char *)this, sizeof(groccery_list)))  //40 is the sizeof object of shopkeepers groccery list
+		{
+			if(strcmp(name, sname)==0)
+			{
+				if(quantity >= q)
+				{
+				myprice=price;
+				flag=1;
+					
+				break;
+				}
+			}	
+		}
+		sourcefile.close();
+		
+		if(flag ==0)
+			return 0;
+		else 
+			return myprice;
+		
+	}
+
+
+	void deleterecord( char id[2], char cname[20])
+	{
+		fstream myfile;
+		myfile.open(id, ios ::in | ios ::out);
+		myfile.seekg(1, ios::beg);
+		
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				strcpy(name," ");	
+				price=0;
+				quantity=0;
+				myfile.seekp(-(sizeof(groccery_list)),ios::cur);
+				
+				myfile.write((char *)this, sizeof(groccery_list));
+			}
+		}
+		myfile.close();
+	}
+	
+	
+		
+	void updatequantity(char id[2], int q, char cname[20], float pr, char *extl)
+	{
+		fstream myfile;
+		myfile.open(id, ios ::in | ios ::out);
+		myfile.seekg(1, ios::beg);
+		
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+				
+				quantity = q;
+				price =q * pr;
+				strcpy(ext, extl);				
+				myfile.seekp(-(sizeof(groccery_list)),ios::cur);
+				
+				myfile.write((char *)this, sizeof(groccery_list));
+			}
+		}
+		myfile.close();
+	}
+	
+	void display_shopkeeper_list(char cname[20], int q)
+	{
+		int fl = 0;
+		ifstream myfile;
+		myfile.open("shoplist.txt", ios ::in );
+		myfile.seekg(0, ios::beg);
+		while(myfile.read((char *)this, sizeof(groccery_list)))
+		{
+			if(strcmp(name, cname)==0)
+			{
+			if(quantity >=q){
+				cout<<endl;
+				cout<<"\nProduct is available in the quantity you provided\n";
+			}
+			else {
+			cout<<"\nOnly "<<quantity<<ext<<" is available"<<endl;
+						
+			}
+			fl = 1;
+			break;
+			}
+			
+		}
+		if(fl==0) cout<<"\nSORRY Product is not available"<<endl;
+		myfile.close();
+	}
+
+	
+
+};
+	
+
+class Customer : public exception
+{
+	int userid;
+	char name[20];
+	char add[20];
+	float total;
+	int no_of_shops;
+	int points;
+	char id[2];
+	groccery_list gl, gl2;
+	
+	
+			
+	public :
+		Customer()
+		{
+			id[2]={'\0'};
+			no_of_shops = 0;
+			points = 100;
+			total =0;
+		}
+
+		
+		virtual const char* what() const throw()
+		{
+			return "Invalid user";
+		}
+
+	
+		int verification()
+		{
+			int flag=0, uid;
+			cout<<"\nEnter userid-->"<<endl;
+			cin>>uid;			
+			ifstream myfile;
+			myfile.open("customerdata.txt", ios ::in );
+			myfile.seekg(0, ios::beg);
+			while(myfile.read((char *)this, sizeof(Customer)))
+			{
+				if(userid==uid)
+				{
+					
+					id[0]= (char)uid;
+					id[1]='\0';
+					ofstream myfiles;
+					myfiles.open(id, ios:: out);
+					myfiles<<uid;
+					
+					cout<<"\nHi "<<name<<" !"<<endl; 
+					flag=1;
+					myfiles.close();
+					break;	
+				}
+			}
+			myfile.close();
+			
+			if(flag==1) 
+			return 1;
+			else return 0;
+		}
+		int getcount()
+		{
+			ifstream myfile;
+			myfile.open("customerdata.txt",  ios ::in );
+			myfile.seekg(0, ios::beg);
+			int uid = 1;
+			while(myfile.read((char *)this, sizeof(Customer)))	
+			{
+				++uid;
+			}	
+			myfile.close();
+			return uid;
+		}
+		
+		int getshops()
+		{
+			int uid = userid;
+			int noshops;
+			ifstream myfile;
+			myfile.open("customerdata.txt", ios ::in);
+			while(myfile.read((char *)this, sizeof(Customer)))
+			{
+				if(userid==uid)
+				{
+					noshops= no_of_shops;
+					break;
+				}
+			}
+			myfile.close();
+			return noshops;
+		}
+		
+		float settotal(float tot)
+		{
+			float bal = 0;
+			int uid = userid;
+			fstream myfile;
+			myfile.open("customerdata.txt", ios ::in | ios::out);
+			while(myfile.read((char *)this, sizeof(Customer)))
+			{
+				if(userid==uid)
+				{
+					bal = total;
+					total =tot+total;
+				myfile.seekp(-sizeof(Customer), ios ::cur);
+				myfile.write((char *)this, sizeof(Customer));
+					break;
+				
+				}
+			}
+			myfile.close();
+			return bal;
+		}
+		void increment_shops()
+		{
+			int uid = userid;
+			fstream myfile;
+			myfile.open("customerdata.txt", ios ::in | ios::out);
+			while(myfile.read((char *)this, sizeof(Customer)))
+			{
+				if(userid==uid)
+				{
+					 ++no_of_shops;
+					myfile.seekp(-sizeof(Customer), ios ::cur);
+					myfile.write((char *)this, sizeof(Customer));
+					break;
+				
+				}
+			}
+			myfile.close();
+		}
+
+		void increment_pts(int total)
+		{
+			int uid = userid;
+			fstream myfile;
+			myfile.open("customerdata.txt", ios ::in | ios::out);
+			while(myfile.read((char *)this, sizeof(Customer)))
+			{
+				if(userid==uid)
+				{
+					 points = points + (total*0.02);
+					myfile.seekp(-sizeof(Customer), ios ::cur);
+					myfile.write((char *)this, sizeof(Customer));
+					break;
+				
+				}
+			}
+			myfile.close();
+		}
+		
+		int return_pts()
+		{
+			int uid = userid;
+			fstream myfile;
+			int pts;
+			myfile.open("customerdata.txt", ios ::in | ios::out);
+			while(myfile.read((char *)this, sizeof(Customer)))
+			{
+				if(userid==uid)
+				{
+					pts =  points;
+					points = 0;
+					myfile.seekp(-sizeof(Customer), ios ::cur);
+					myfile.write((char *)this, sizeof(Customer));
+					break;
+				}
+			}
+			myfile.close();
+			return pts;
+		}
+		
+		void createaccount()
+		{
+			ofstream myfile;
+			userid=getcount();	
+					
+			cout<<endl<<userid<<endl;		
+			cout<<"\nEnter name"<<endl;
+			cin.ignore();
+			cin.getline(name, 20);
+			cout<<"\nEnter valid address->";
+			cin.ignore();
+			cin.getline(add, 20);
+			id[0]= (char)userid;
+			id[1]='\0';
+			no_of_shops = 0;
+			points = 100;
+			
+			total =0;
+			myfile.open("customerdata.txt", ios :: app);
+			myfile.write((char *)this, sizeof(Customer));
+			myfile.close();
+						
+			createshoplist();			
+								
+					
+		}	
+		
+		void createshoplist()
+		{
+			ofstream myfiles;
+			myfiles.open(id, ios:: out);
+			myfiles<<userid;
+			myfiles.close();			
+			
+		}	
+		void acceptdata()
+		{
+			
+			char name[20], ext[4];
+			int total, q, flag;
+			float price;
+			cout<<"\nEnter total number of goods"<<endl;
+			cin>>total;
+			if(total >=1)
+				increment_shops();
+			for(int i=0; i< total ; i++)
+			{
+				cout<<"\nEnter product name"<<endl;
+				cin.ignore();
+				cin.getline(name, 20);
+				flag = gl.checkavailable(id, name);
+				if(flag ==1 )
+				{
+				cout<<"\nproduct is already added in the list";
+				--i;		        	
+				}
+				else
+				{				
+				cout<<"\nEnter quantity"<<endl;
+				cin>>q>>ext;
+				price=gl2.compareproduct(name, q);		
+				if(price != 0)
+				{
+															
+					gl.createlist(id, name, q, ext, price);
+					
+				}
+				else
+				{
+					cout<<"\nSORRY ! The product is currently unvailable / out of stock "<<endl;
+					--i;
+				}
+				}
+			}
+			
+		}
+		
+				
+
+		void update()
+		{
+			try {
+			char name[20], ch, ext[4];
+			int choice, quantity;
+			float price;
+			cout<<"\nEnter product name"<<endl;
+			cin.ignore();
+			cin.getline(name, 20);
+			if(gl.checkavailable(id, name) == 0)
+				throw 1;				
+			do
+			{
+			cout<<"\n1.Update quantity \n2.Delete record"<<endl;
+			cin>>choice;
+			switch(choice)
+			{
+			case 1: cout<<"\nEnter quantity"<<endl<<endl;
+				cin>>quantity>>ext;
+				price=gl2.compareproduct(name, quantity);
+				if(price !=0){
+				gl.updatequantity(id, quantity, name, price, ext);
+				cout<<"\nUpdated successfully.";}
+				else
+				cout<<"\nLack of stock";
+				break;
+
+			case 2: 
+				gl.deleterecord(id, name);
+				cout<<"\nDeleted successfully.";
+				break;
+						
+			}
+			cout<<"\nUpdate something else ?"<<endl;
+			cin>>ch;
+			}while(ch == 'y');
+			}
+			catch(int a)
+			{
+				cout<<"\nProduct is not available in your list"<<endl;
+			}
+		}
+		void display()
+		{
+			
+			cout<<"\nName :"<<name;
+			cout<<"\nAddress :"<<add;
+			cout<<endl;
+			gl.display(id);
+		}	
+		
+		void shoplist()
+		{
+			char name[20], ext[4];
+			int q;
+			cout<<"\nEnter name of product to be searched"<<endl;
+			cin.ignore();
+			cin.getline(name, 20);
+			cout<<"\nEnter quantity "<<endl;
+			cin>>q>>ext;			
+			gl.display_shopkeeper_list(name, q);
+			
+			
+		}
+		void createbill()
+		{
+		
+			char ans = 'n';
+			int point = return_pts();			
+			display();
+			float total = gl.returntotal(id);
+			float bal;
+			
+			if(total > 100)
+				increment_pts(total);
+			if(getshops() >= 4)
+			{	if(points>0){
+				cout<<"\nDo you want to redeem points ?"<<endl ;
+				cin>>ans;}
+				
+
+			}
+			if(ans =='y')
+			{
+				total= total - (return_pts()*0.5); 
+			}
+			bal=settotal(total);
+			cout<<"\nTotal price = Rs."<<total;
+			cout<<"\nYour balance is  Rs."<<bal;
+			total = total+bal;
+			cout<<"\nTotal amount to be paid : Rs."<<total;
+					cout<<endl;
+			cout<<endl;
+			cout<<"\n---------------------------------------------------------\n";	
+		}
+			
+};
+
+
+ 
+int main()
+{
+	Customer a;
+	int choice, flag=0;
+	int fl = 0, id;
+		
+	cout<<"\n1. sign in";
+	cout<<"\n2. sign out";
+	cin>>choice;
+   try
+   {
+	switch(choice)
+	{
+		case 1: id = a.verification();
+			if(id == 0)
+			  throw Customer();
+			break;
+		case 2:	a.createaccount();
+			break;
+	}
+
+
+    do {
+	cout<<"\n1.Add products / Create list";
+	cout<<"\n2.Update data"<<endl;
+	cout<<"3.Display my list"<<endl;
+	cout<<"4.Check product for avaiablity";
+	if(fl == 1)
+	cout<<"\n5.Create bill";
+	cout<<"\nPress 6 to EXIT"<<endl;
+	cin>>choice;
+	
+	switch(choice)
+	{
+		case 1:a.acceptdata();
+			fl = 1;
+			break;
+		case 2:a.update();
+			break;
+		case 3:a.display();
+			break;
+		case 4:a.shoplist();
+			break;
+		case 5:if(fl == 1)
+			a.createbill();
+			
+		
+	}
+	
+      }while(choice != 6); 
+    	cout<<"\nThank you :) \n";
+ }
+ catch(exception &e)
+ {
+	cout<<endl<<e.what()<<endl;
+ }
+return 0;
+}
+	
+	
